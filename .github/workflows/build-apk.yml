@@ -23,17 +23,51 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Siapkan debug.keystore dan Firebase ID Asli
+      - name: Siapkan debug.keystore dan google-services.json Asli
         run: |
           if [ ! -f debug.keystore ]; then
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
-          mkdir -p app/src/main/res/values
-          cat << 'EOF' > app/src/main/res/values/firebase_config.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <string name="default_web_client_id" translatable="false">://googleusercontent.com</string>
-          </resources>
+          cat << 'EOF' > app/google-services.json
+          {
+            "project_info": {
+              "project_number": "583437998565",
+              "project_id": "winter-axon-z7cdj",
+              "storage_bucket": "winter-axon-z7cdj.firebasestorage.app"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:583437998565:android:a6cff01d68136aa6ac370c",
+                  "android_client_info": {
+                    "package_name": "com.aistudio.cbtnusantara.vkorap"
+                  }
+                },
+                "oauth_client": [
+                  {
+                    "client_id": "://googleusercontent.com",
+                    "client_type": 3
+                  }
+                ],
+                "api_key": [
+                  {
+                    "current_key": "AIzaSyDdDKikZ44jA_QSu3OSnU6Qffx5KKd5wTk"
+                  }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": [
+                      {
+                        "client_id": "://googleusercontent.com",
+                        "client_type": 3
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
           EOF
 
       - name: Build Debug APK
@@ -44,3 +78,4 @@ jobs:
         with:
           name: Aplikasi-UTBK-APK
           path: "**/build/outputs/apk/debug/*.apk"
+
