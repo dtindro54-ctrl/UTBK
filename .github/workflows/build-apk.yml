@@ -30,8 +30,10 @@ jobs:
           fi
           echo "=== KODE SHA1 UNTUK FIREBASE ==="
           keytool -list -v -keystore debug.keystore -storepass android -alias androiddebugkey | grep -E "SHA1:"
+          PKG=$(grep -oP 'applicationId\s*=\s*"\K[^"]+' app/build.gradle.kts | head -n 1)
+          echo "Paket terdeteksi: $PKG"
           rm -f app/google-services.json
-          printf '%s\n' '{"project_info":{"project_number":"583437998565","project_id":"winter-axon-z7cdj","storage_bucket":"winter-axon-z7cdj.firebasestorage.app"},"client":[{"client_info":{"mobilesdk_app_id":"1:583437998565:android:a6cff01d68136aa6ac370c","android_client_info":{"package_name":"com.aistudio.cbtnusantara.vkorap"}},"oauth_client":[{"client_id":"://googleusercontent.com","client_type":1,"android_info":{"package_name":"com.aistudio.cbtnusantara.vkorap","certificate_hash":"779f5edbfd811dfea163fd671293a3f373ad7011"}},{"client_id":"://googleusercontent.com","client_type":3}],"api_key":[{"current_key":"AIzaSyDdDKikZ44jA_QSu3OSnU6Qffx5KKd5wTk"}],"services":{"appinvite_service":{"other_platform_oauth_client":[{"client_id":"://googleusercontent.com","client_type":3}]}}}],"configuration_version":"1"}' > app/google-services.json
+          printf '{"project_info":{"project_number":"583437998565","project_id":"winter-axon-z7cdj","storage_bucket":"winter-axon-z7cdj.firebasestorage.app"},"client":[{"client_info":{"mobilesdk_app_id":"1:583437998565:android:a6cff01d68136aa6ac370c","android_client_info":{"package_name":"%s"}},"oauth_client":[{"client_id":"://googleusercontent.com","client_type":1,"android_info":{"package_name":"%s","certificate_hash":"779f5edbfd811dfea163fd671293a3f373ad7011"}},{"client_id":"://googleusercontent.com","client_type":3}],"api_key":[{"current_key":"AIzaSyDdDKikZ44jA_QSu3OSnU6Qffx5KKd5wTk"}],"services":{"appinvite_service":{"other_platform_oauth_client":[{"client_id":"://googleusercontent.com","client_type":3}]}}}],"configuration_version":"1"}\n' "$PKG" "$PKG" > app/google-services.json
 
       - name: Build Debug APK
         run: gradle assembleDebug --no-build-cache --rerun-tasks
@@ -41,3 +43,4 @@ jobs:
         with:
           name: Aplikasi-UTBK-APK
           path: "**/build/outputs/apk/debug/*.apk"
+
