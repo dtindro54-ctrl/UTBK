@@ -1,0 +1,209 @@
+{
+  "entities": {
+    "SchoolProfile": {
+      "title": "SchoolProfile",
+      "description": "Teacher's school letterhead (Kop Surat) and display identity for official exam reports.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated teacher UID matching document ID."
+        },
+        "namaDinas": {
+          "type": "string",
+          "description": "Department or provincial education authority header."
+        },
+        "namaSekolah": {
+          "type": "string",
+          "description": "School name displayed in report header."
+        },
+        "alamatSekolah": {
+          "type": "string",
+          "description": "School address and phone number."
+        },
+        "namaGuru": {
+          "type": "string",
+          "description": "Teacher name for signature block."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp()) when profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp()) when profile was last updated."
+        }
+      },
+      "required": ["userId", "namaDinas", "namaSekolah", "alamatSekolah", "namaGuru", "createdAt", "updatedAt"]
+    },
+    "Exam": {
+      "title": "Exam",
+      "description": "A CBT exam package created by a teacher.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Authenticated teacher UID who owns the exam."
+        },
+        "judul": {
+          "type": "string",
+          "description": "Exam title."
+        },
+        "mapel": {
+          "type": "string",
+          "description": "Subject name (Mata Pelajaran)."
+        },
+        "durasiMenit": {
+          "type": "integer",
+          "description": "Exam duration in minutes (1-300)."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Whether this exam is currently active for student access."
+        },
+        "tokenSusulan": {
+          "type": "string",
+          "description": "Optional make-up exam token; empty string means regular mode."
+        },
+        "questionCount": {
+          "type": "integer",
+          "description": "Cached number of questions in this exam."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp()) when created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp()) when updated."
+        }
+      },
+      "required": ["ownerId", "judul", "mapel", "durasiMenit", "active", "tokenSusulan", "questionCount", "createdAt", "updatedAt"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "Multiple-choice question belonging to an exam.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Denormalized teacher UID matching parent exam ownerId."
+        },
+        "examActive": {
+          "type": "boolean",
+          "description": "Denormalized active status of parent exam for rule-enforced student queries."
+        },
+        "orderIndex": {
+          "type": "integer",
+          "description": "Display order index (0-200)."
+        },
+        "pertanyaan": {
+          "type": "string",
+          "description": "Question prompt text."
+        },
+        "opsiA": {
+          "type": "string",
+          "description": "Option A text."
+        },
+        "opsiB": {
+          "type": "string",
+          "description": "Option B text."
+        },
+        "opsiC": {
+          "type": "string",
+          "description": "Option C text."
+        },
+        "opsiD": {
+          "type": "string",
+          "description": "Option D text."
+        },
+        "jawabanBenar": {
+          "type": "string",
+          "description": "Exact text of the correct option."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp()) when created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp()) when updated."
+        }
+      },
+      "required": ["ownerId", "examActive", "orderIndex", "pertanyaan", "opsiA", "opsiB", "opsiC", "opsiD", "jawabanBenar", "createdAt", "updatedAt"]
+    },
+    "ExamResult": {
+      "title": "ExamResult",
+      "description": "Locked student exam score submission. Immutable once created; teacher can delete to unlock for make-up exam.",
+      "type": "object",
+      "properties": {
+        "examOwnerId": {
+          "type": "string",
+          "description": "Denormalized teacher UID of the parent exam."
+        },
+        "studentUid": {
+          "type": "string",
+          "description": "Authenticated UID of the student device submitting the result."
+        },
+        "nama": {
+          "type": "string",
+          "description": "Student full name."
+        },
+        "kelas": {
+          "type": "string",
+          "description": "Student class or ID number (Kelas / NIM)."
+        },
+        "studentKey": {
+          "type": "string",
+          "description": "Normalized lowercase nama|kelas key for duplicate prevention."
+        },
+        "skor": {
+          "type": "integer",
+          "description": "Final exam score (0-100)."
+        },
+        "benarCount": {
+          "type": "integer",
+          "description": "Number of correctly answered questions."
+        },
+        "totalCount": {
+          "type": "integer",
+          "description": "Total number of questions in the exam."
+        },
+        "waktuSelesai": {
+          "type": "string",
+          "description": "Formatted completion timestamp string."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp()) when submitted."
+        }
+      },
+      "required": ["examOwnerId", "studentUid", "nama", "kelas", "studentKey", "skor", "benarCount", "totalCount", "waktuSelesai", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/SchoolProfile" },
+      "description": "Per-teacher school identity and Kop Surat settings."
+    },
+    "/exams/{examId}": {
+      "schema": { "$ref": "#/entities/Exam" },
+      "description": "CBT exam packages owned by teachers and accessible to students by ID when active."
+    },
+    "/exams/{examId}/questions/{questionId}": {
+      "schema": { "$ref": "#/entities/Question" },
+      "description": "Multiple-choice questions belonging to an exam."
+    },
+    "/exams/{examId}/results/{resultId}": {
+      "schema": { "$ref": "#/entities/ExamResult" },
+      "description": "Permanently locked student submissions keyed deterministically by student identity."
+    }
+  }
+}

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Academic Shield Emblem -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,23 L78,32 L78,54 C78,69.5 67.5,81.5 54,86 C40.5,81.5 30,69.5 30,54 L30,32 Z" />
+    <!-- Inner Shield Cutout -->
+    <path
+        android:fillColor="#13326B"
+        android:pathData="M54,29 L72,35.8 L72,53.5 C72,65.5 64,74.8 54,79 C44,74.8 36,65.5 36,53.5 L36,35.8 Z" />
+    <!-- Bold Gold Checkmark / Exam Verified Symbol -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M49.5,64.5 L40.5,55.5 L44.7,51.3 L49.5,56.1 L63.3,42.3 L67.5,46.5 Z" />
+    <!-- Academic Cap Top Bar Accent -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M43,39 L54,34 L65,39 L54,44 Z" />
+</vector>

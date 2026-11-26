@@ -1,0 +1,216 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- GLOBAL PRIMITIVES ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(val) {
+      return val is timestamp && val <= request.time;
+    }
+
+    // --- ENTITY VALIDATION BLUEPRINTS ---
+    function isValidSchoolProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.namaDinas is string && data.namaDinas.size() >= 1 && data.namaDinas.size() <= 150 &&
+             data.namaSekolah is string && data.namaSekolah.size() >= 1 && data.namaSekolah.size() <= 150 &&
+             data.alamatSekolah is string && data.alamatSekolah.size() >= 1 && data.alamatSekolah.size() <= 250 &&
+             data.namaGuru is string && data.namaGuru.size() <= 120 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidExam(data) {
+      return data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+             data.judul is string && data.judul.size() >= 1 && data.judul.size() <= 150 &&
+             data.mapel is string && data.mapel.size() >= 1 && data.mapel.size() <= 100 &&
+             data.durasiMenit is int && data.durasiMenit >= 1 && data.durasiMenit <= 300 &&
+             data.active is bool &&
+             data.tokenSusulan is string && data.tokenSusulan.size() <= 64 &&
+             data.questionCount is int && data.questionCount >= 0 && data.questionCount <= 100 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidQuestion(data) {
+      return data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+             data.examActive is bool &&
+             data.orderIndex is int && data.orderIndex >= 0 && data.orderIndex <= 200 &&
+             data.pertanyaan is string && data.pertanyaan.size() >= 1 && data.pertanyaan.size() <= 1000 &&
+             data.opsiA is string && data.opsiA.size() >= 1 && data.opsiA.size() <= 400 &&
+             data.opsiB is string && data.opsiB.size() >= 1 && data.opsiB.size() <= 400 &&
+             data.opsiC is string && data.opsiC.size() >= 1 && data.opsiC.size() <= 400 &&
+             data.opsiD is string && data.opsiD.size() >= 1 && data.opsiD.size() <= 400 &&
+             data.jawabanBenar is string && data.jawabanBenar.size() >= 1 && data.jawabanBenar.size() <= 400 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidExamResult(data) {
+      return data.examOwnerId is string && data.examOwnerId.size() >= 1 && data.examOwnerId.size() <= 128 &&
+             data.studentUid is string && data.studentUid.size() >= 1 && data.studentUid.size() <= 128 &&
+             data.nama is string && data.nama.size() >= 1 && data.nama.size() <= 100 &&
+             data.kelas is string && data.kelas.size() >= 1 && data.kelas.size() <= 60 &&
+             data.studentKey is string && data.studentKey.size() >= 3 && data.studentKey.size() <= 165 &&
+             data.skor is int && data.skor >= 0 && data.skor <= 100 &&
+             data.benarCount is int && data.benarCount >= 0 && data.benarCount <= 200 &&
+             data.totalCount is int && data.totalCount >= 1 && data.totalCount <= 200 &&
+             data.benarCount <= data.totalCount &&
+             data.waktuSelesai is string && data.waktuSelesai.size() >= 1 && data.waktuSelesai.size() <= 40 &&
+             isValidTimestamp(data.createdAt);
+    }
+
+    // --- COLLECTION: /users/{userId} (School Kop Surat Profile) ---
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if false;
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['userId', 'namaDinas', 'namaSekolah', 'alamatSekolah', 'namaGuru', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'namaDinas', 'namaSekolah', 'alamatSekolah', 'namaGuru', 'createdAt', 'updatedAt']) &&
+                       isValidSchoolProfile(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       isValidSchoolProfile(incoming()) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['namaDinas', 'namaSekolah', 'alamatSekolah', 'namaGuru', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+    }
+
+    // --- COLLECTION: /exams/{examId} ---
+    match /exams/{examId} {
+      allow get: if isSignedIn() &&
+                    isValidId(examId) &&
+                    (existing().ownerId == request.auth.uid || existing().active == true);
+
+      // Teachers list only their own exams (client must filter whereEqualTo("ownerId", uid))
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(examId) &&
+                       incoming().ownerId == request.auth.uid &&
+                       incoming().keys().hasAll(['ownerId', 'judul', 'mapel', 'durasiMenit', 'active', 'tokenSusulan', 'questionCount', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['ownerId', 'judul', 'mapel', 'durasiMenit', 'active', 'tokenSusulan', 'questionCount', 'createdAt', 'updatedAt']) &&
+                       isValidExam(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(examId) &&
+                       isValidExam(incoming()) &&
+                       existing().ownerId == request.auth.uid &&
+                       incoming().ownerId == existing().ownerId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action: Toggle active status
+                         incoming().diff(existing()).affectedKeys().hasOnly(['active', 'updatedAt']) ||
+                         // Action: Configure make-up (susulan) token
+                         incoming().diff(existing()).affectedKeys().hasOnly(['tokenSusulan', 'updatedAt']) ||
+                         // Action: Update exam metadata & question count
+                         incoming().diff(existing()).affectedKeys().hasOnly(['judul', 'mapel', 'durasiMenit', 'active', 'tokenSusulan', 'questionCount', 'updatedAt'])
+                       );
+
+      allow delete: if isSignedIn() && isValidId(examId) && existing().ownerId == request.auth.uid;
+
+      // --- SUBCOLLECTION: /exams/{examId}/questions/{questionId} ---
+      match /questions/{questionId} {
+        allow get: if isSignedIn() &&
+                      isValidId(examId) &&
+                      isValidId(questionId) &&
+                      (existing().ownerId == request.auth.uid || existing().examActive == true);
+
+        // No get()/exists() in allow list! Denormalized ownerId & examActive enforce access.
+        // Teacher queries whereEqualTo("ownerId", uid); Student queries whereEqualTo("examActive", true).
+        allow list: if isSignedIn() &&
+                       (existing().ownerId == request.auth.uid || existing().examActive == true);
+
+        allow create: if isSignedIn() &&
+                         isValidId(examId) &&
+                         isValidId(questionId) &&
+                         incoming().ownerId == request.auth.uid &&
+                         incoming().keys().hasAll(['ownerId', 'examActive', 'orderIndex', 'pertanyaan', 'opsiA', 'opsiB', 'opsiC', 'opsiD', 'jawabanBenar', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['ownerId', 'examActive', 'orderIndex', 'pertanyaan', 'opsiA', 'opsiB', 'opsiC', 'opsiD', 'jawabanBenar', 'createdAt', 'updatedAt']) &&
+                         isValidQuestion(incoming()) &&
+                         exists(/databases/$(database)/documents/exams/$(examId)) &&
+                         get(/databases/$(database)/documents/exams/$(examId)).data.ownerId == request.auth.uid;
+
+        allow update: if isSignedIn() &&
+                         isValidId(examId) &&
+                         isValidId(questionId) &&
+                         isValidQuestion(incoming()) &&
+                         existing().ownerId == request.auth.uid &&
+                         incoming().ownerId == existing().ownerId &&
+                         incoming().createdAt == existing().createdAt &&
+                         (
+                           // Action: Sync parent exam active flag
+                           incoming().diff(existing()).affectedKeys().hasOnly(['examActive', 'updatedAt']) ||
+                           // Action: Edit question content
+                           incoming().diff(existing()).affectedKeys().hasOnly(['orderIndex', 'pertanyaan', 'opsiA', 'opsiB', 'opsiC', 'opsiD', 'jawabanBenar', 'updatedAt'])
+                         );
+
+        allow delete: if isSignedIn() &&
+                         isValidId(examId) &&
+                         isValidId(questionId) &&
+                         existing().ownerId == request.auth.uid;
+      }
+
+      // --- SUBCOLLECTION: /exams/{examId}/results/{resultId} ---
+      match /results/{resultId} {
+        allow get: if isSignedIn() &&
+                      isValidId(examId) &&
+                      isValidId(resultId) &&
+                      (existing().examOwnerId == request.auth.uid || existing().studentUid == request.auth.uid);
+
+        // Teacher lists via whereEqualTo("examOwnerId", uid); Student lists own via whereEqualTo("studentUid", uid)
+        allow list: if isSignedIn() &&
+                       (existing().examOwnerId == request.auth.uid || existing().studentUid == request.auth.uid);
+
+        allow create: if isSignedIn() &&
+                         isValidId(examId) &&
+                         isValidId(resultId) &&
+                         incoming().studentUid == request.auth.uid &&
+                         incoming().keys().hasAll(['examOwnerId', 'studentUid', 'nama', 'kelas', 'studentKey', 'skor', 'benarCount', 'totalCount', 'waktuSelesai', 'createdAt']) &&
+                         incoming().keys().hasOnly(['examOwnerId', 'studentUid', 'nama', 'kelas', 'studentKey', 'skor', 'benarCount', 'totalCount', 'waktuSelesai', 'createdAt']) &&
+                         isValidExamResult(incoming()) &&
+                         exists(/databases/$(database)/documents/exams/$(examId)) &&
+                         get(/databases/$(database)/documents/exams/$(examId)).data.ownerId == incoming().examOwnerId &&
+                         (
+                           get(/databases/$(database)/documents/exams/$(examId)).data.active == true ||
+                           get(/databases/$(database)/documents/exams/$(examId)).data.ownerId == request.auth.uid
+                         );
+
+        // Terminal State Lock: submitted scores are permanently locked and cannot be edited
+        allow update: if false;
+
+        // Teacher "Buka Kunci" (unlock student for make-up exam) deletes the locked result
+        allow delete: if isSignedIn() &&
+                         isValidId(examId) &&
+                         isValidId(resultId) &&
+                         existing().examOwnerId == request.auth.uid;
+      }
+    }
+  }
+}

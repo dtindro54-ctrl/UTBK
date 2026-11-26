@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">CBT Nusantara</string>
+    <string name="auth_subtitle">Sistem Ujian Sekolah Aman &amp; Generator Soal AI dari PDF</string>
+    <string name="auth_google_button">Masuk dengan Google</string>
+    <string name="auth_privacy_note">Data bank soal, nilai siswa, dan pengaturan sekolah tersimpan aman di akun Google Anda.</string>
+    <string name="mode_teacher_title">Panel Kontrol Guru</string>
+    <string name="mode_teacher_desc">Generate soal AI dari PDF, kelola paket ujian, QR Code terenkripsi, mode susulan, dan cetak rekap nilai.</string>
+    <string name="mode_student_title">Mode Siswa &amp; Exam Browser</string>
+    <string name="mode_student_desc">Scan QR ujian terenkripsi (EXAMSEC::), kerjakan ujian terkunci, atau buka server CBT lokal sekolah.</string>
+    <string name="action_sign_out">Keluar Akun</string>
+    <string name="action_back">Kembali</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_delete">Hapus</string>
+    <string name="action_activate">Aktifkan</string>
+    <string name="action_manage">Kelola / Nilai</string>
+    <string name="badge_active">AKTIF</string>
+    <string name="badge_inactive">Nonaktif</string>
+    <string name="badge_susulan">SUSULAN</string>
+    <string name="badge_locked">TERKUNCI</string>
+    <string name="default_dinas">PEMERINTAH PROVINSI JAWA TENGAH / DINAS PENDIDIKAN</string>
+    <string name="default_school">SMA / SMK NEGERI CONTOH NUSANTARA</string>
+    <string name="default_address">Jl. Pendidikan No. 123, Semarang | Telp. (024) 1234567</string>
+</resources>

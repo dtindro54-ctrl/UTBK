@@ -1,0 +1,6 @@
+{
+  "name": "CBT Nusantara",
+  "description": "Aplikasi CBT Ujian Sekolah & Generator Soal AI dari PDF, lengkap dengan Panel Guru, QR Code Terenkripsi, Mode Susulan, Exam Browser Aman, dan Rekap Nilai.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
