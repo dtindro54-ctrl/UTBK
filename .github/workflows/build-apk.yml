@@ -23,21 +23,21 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Siapkan debug.keystore dan google-services.json Asli
+      - name: Siapkan keystore dan google-services.json otomatis
         run: |
           if [ ! -f debug.keystore ]; then
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
+          PKG=$(grep -oP 'applicationId\s*=\s*"\K[^"]+' app/build.gradle.kts | head -n 1)
+          echo "Paket terdeteksi: $PKG"
           rm -f app/google-services.json
-          printf '%s\n' '{"project_info":{"project_number":"583437998565","project_id":"winter-axon-z7cdj","storage_bucket":"winter-axon-z7cdj.firebasestorage.app"},"client":[{"client_info":{"mobilesdk_app_id":"1:583437998565:android:a6cff01d68136aa6ac370c","android_client_info":{"package_name":"com.aistudio.cbtnusantara.vkorap"}},"oauth_client":[{"client_id":"://googleusercontent.com","client_type":3}],"api_key":[{"current_key":"AIzaSyDdDKikZ44jA_QSu3OSnU6Qffx5KKd5wTk"}],"services":{"appinvite_service":{"other_platform_oauth_client":[{"client_id":"://googleusercontent.com","client_type":3}]}}}],"configuration_version":"1"}' > app/google-services.json
+          printf '{"project_info":{"project_number":"583437998565","project_id":"winter-axon-z7cdj","storage_bucket":"winter-axon-z7cdj.firebasestorage.app"},"client":[{"client_info":{"mobilesdk_app_id":"1:583437998565:android:a6cff01d68136aa6ac370c","android_client_info":{"package_name":"%s"}},"oauth_client":[{"client_id":"://googleusercontent.com","client_type":3}],"api_key":[{"current_key":"AIzaSyDdDKikZ44jA_QSu3OSnU6Qffx5KKd5wTk"}],"services":{"appinvite_service":{"other_platform_oauth_client":[{"client_id":"://googleusercontent.com","client_type":3}]}}}],"configuration_version":"1"}\n' "$PKG" > app/google-services.json
 
       - name: Build Debug APK
-        run: gradle assembleDebug
+        run: gradle assembleDebug --no-build-cache --rerun-tasks
 
       - name: Upload file APK
         uses: actions/upload-artifact@v4
         with:
           name: Aplikasi-UTBK-APK
           path: "**/build/outputs/apk/debug/*.apk"
-
-
