@@ -10,7 +10,6 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import com.example.R
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
@@ -28,13 +27,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
-fun observeFirebaseAuthStateFlow(): Flow<FirebaseUser?> = callbackFlow {
+fun FirebaseAuth.authStateFlow(): Flow<FirebaseUser?> = callbackFlow {
     val listener = FirebaseAuth.AuthStateListener { auth ->
         trySend(auth.currentUser)
     }
-    Firebase.auth.addAuthStateListener(listener)
-    awaitClose { Firebase.auth.removeAuthStateListener(listener) }
+    addAuthStateListener(listener)
+    awaitClose { removeAuthStateListener(listener) }
 }
+
+fun observeFirebaseAuthStateFlow(): Flow<FirebaseUser?> = Firebase.auth.authStateFlow()
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
@@ -77,7 +78,7 @@ fun onGoogleSignInClicked(
     scope.launch {
         try {
             val activity = context.findActivity()
-                ?: throw IllegalStateException("Aktivitas tidak ditemukan untuk Masuk dengan Google.")
+                ?: throw IllegalStateException("Aktivitas tidak ditemukan.")
             val cred = credentialManager.getCredential(activity, request).credential
             if (cred is CustomCredential && cred.type == TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                 val token = GoogleIdTokenCredential.createFrom(cred.data).idToken
@@ -89,16 +90,16 @@ fun onGoogleSignInClicked(
                 onAuthSuccess()
             }
         } catch (e: GetCredentialCancellationException) {
-            Log.w("Auth", "Login Google dibatalkan, lanjut masuk mode siswa: ${e.message}")
+            Log.w("Auth", "Login Google dibatalkan, lanjut masuk: ${e.message}")
             onAuthSuccess()
         } catch (e: Exception) {
-            Log.e("Auth", "Login Google gagal, lanjut masuk mode siswa", e)
+            Log.e("Auth", "Login Google gagal, lanjut masuk", e)
             onAuthSuccess()
         }
     }
 }
 
-fun signOutFromGoogle(
+fun signOutGoogle(
     credentialManager: CredentialManager,
     scope: CoroutineScope,
     onSignOutComplete: () -> Unit = {}
@@ -116,3 +117,9 @@ fun signOutFromGoogle(
         }
     }
 }
+
+fun signOutFromGoogle(
+    credentialManager: CredentialManager,
+    scope: CoroutineScope,
+    onSignOutComplete: () -> Unit = {}
+) = signOutGoogle(credentialManager, scope, onSignOutComplete)
