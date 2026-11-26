@@ -8,7 +8,6 @@ import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialCancellationException
 import com.example.R
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -57,6 +56,16 @@ fun attemptAutoSignIn(
     onUnauthenticated()
 }
 
+private suspend fun fallbackAnonymousSignIn(onAuthSuccess: () -> Unit, onAuthError: (String) -> Unit) {
+    try {
+        Firebase.auth.signInAnonymously().await()
+        onAuthSuccess()
+    } catch (e: Exception) {
+        Log.e("Auth", "Anonymous sign-in gagal", e)
+        onAuthError("Gagal masuk: ${e.message}")
+    }
+}
+
 fun onGoogleSignInClicked(
     context: Context,
     credentialManager: CredentialManager,
@@ -65,17 +74,17 @@ fun onGoogleSignInClicked(
     scope: CoroutineScope,
     onAuthCancelled: () -> Unit = {}
 ) {
-    val clientId = try {
-        context.getString(R.string.default_web_client_id)
-    } catch (_: Exception) {
-        onAuthSuccess()
-        return
-    }
-    val signInOption = GetSignInWithGoogleOption.Builder(clientId).build()
-    val request = GetCredentialRequest.Builder()
-        .addCredentialOption(signInOption)
-        .build()
     scope.launch {
+        val clientId = try {
+            context.getString(R.string.default_web_client_id)
+        } catch (_: Exception) {
+            fallbackAnonymousSignIn(onAuthSuccess, onAuthError)
+            return@launch
+        }
+        val signInOption = GetSignInWithGoogleOption.Builder(clientId).build()
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(signInOption)
+            .build()
         try {
             val activity = context.findActivity()
                 ?: throw IllegalStateException("Aktivitas tidak ditemukan.")
@@ -87,14 +96,11 @@ fun onGoogleSignInClicked(
                 ).await()
                 onAuthSuccess()
             } else {
-                onAuthSuccess()
+                fallbackAnonymousSignIn(onAuthSuccess, onAuthError)
             }
-        } catch (e: GetCredentialCancellationException) {
-            Log.w("Auth", "Login Google dibatalkan, lanjut masuk: ${e.message}")
-            onAuthSuccess()
         } catch (e: Exception) {
-            Log.e("Auth", "Login Google gagal, lanjut masuk", e)
-            onAuthSuccess()
+            Log.w("Auth", "Google sign-in dialihkan ke sesi siswa: ${e.message}")
+            fallbackAnonymousSignIn(onAuthSuccess, onAuthError)
         }
     }
 }
