@@ -23,12 +23,6 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Simpan Keystore Permanen di Cache
-        uses: actions/cache@v4
-        with:
-          path: debug.keystore
-          key: cbt-nusantara-debug-keystore-v1
-
       - name: Siapkan keystore dan cetak SHA-1
         run: |
           if [ ! -f debug.keystore ]; then
